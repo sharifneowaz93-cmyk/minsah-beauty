@@ -26,6 +26,13 @@ function isOriginAllowed(origin: string | null): boolean {
   return allowedOrigins.includes(origin);
 }
 
+// Generate nonce for CSP
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Buffer.from(array).toString('base64');
+}
+
 // Create base response with security headers
 function createSecureResponse(response: NextResponse): NextResponse {
   // Security headers
@@ -33,19 +40,24 @@ function createSecureResponse(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Content-Type', 'text/html; charset=utf-8');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self), payment=(self)');
 
   // CSP header for production
   if (process.env.NODE_ENV === 'production') {
+    const minioHost = process.env.MINIO_ENDPOINT || 'storage.minsahbeauty.cloud';
+
     response.headers.set(
       'Content-Security-Policy',
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net; " +
+      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net https://www.google-analytics.com; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "img-src 'self' data: https: blob:; " +
+      `img-src 'self' data: https: blob: http://${minioHost}:9000 https://${minioHost}; ` +
       "font-src 'self' https://fonts.gstatic.com; " +
-      "connect-src 'self' https://www.google-analytics.com https://graph.facebook.com https://api.minsahbeauty.cloud; " +
-      "frame-ancestors 'none';"
+      `connect-src 'self' https://www.google-analytics.com https://graph.facebook.com wss: http://${minioHost}:9000; ` +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "upgrade-insecure-requests;"
     );
   }
 
