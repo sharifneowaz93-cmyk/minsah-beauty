@@ -32,6 +32,9 @@ const mockUser: User = {
   status: 'active',
   createdAt: new Date('2023-01-15'),
   lastLoginAt: new Date('2024-01-20'),
+  addresses: [],
+  loyaltyPoints: 0,
+  referralCode: 'JOHN123',
   preferences: {
     newsletter: true,
     smsNotifications: false,
