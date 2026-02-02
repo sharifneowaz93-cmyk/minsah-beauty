@@ -18,7 +18,8 @@ import {
   Eye as EyeOutline,
   Package,
   Check,
-  X
+  X,
+  ShoppingBag
 } from 'lucide-react';
 import { Star as StarSolid } from 'lucide-react';
 import type { ProductReview } from '@/types/user';
