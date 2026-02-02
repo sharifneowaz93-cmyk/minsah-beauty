@@ -109,7 +109,10 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // Webpack configuration
+  // Turbopack configuration (Next.js 16 default bundler)
+  turbopack: {},
+
+  // Webpack configuration (fallback for compatibility)
   webpack: (config, { isServer }) => {
     // Fix for node modules that need to be transpiled
     if (!isServer) {
