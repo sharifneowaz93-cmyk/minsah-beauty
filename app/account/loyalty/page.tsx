@@ -332,7 +332,7 @@ export default function LoyaltyPage() {
                       <div>
                         <h3 className="font-medium text-gray-900">Shop</h3>
                         <p className="text-gray-600 text-sm">
-                          {LOYALTY_CONFIG.points_per_dollar} points per $1 spent
+                          {LOYALTY_CONFIG.points_per_bdt} point per ৳1 spent
                         </p>
                       </div>
                     </div>
