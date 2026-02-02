@@ -116,11 +116,11 @@ export default function AccountLayout({
         <div className="px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
-              {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+              {user.firstName?.charAt(0) ?? ''}{user.lastName?.charAt(0) ?? ''}
             </div>
             <div>
               <h1 className="font-semibold text-gray-900">My Account</h1>
-              <p className="text-sm text-gray-600">Welcome back, {user.firstName}!</p>
+              <p className="text-sm text-gray-600">Welcome back, {user.firstName ?? 'User'}!</p>
             </div>
           </div>
           <button
@@ -170,10 +170,10 @@ export default function AccountLayout({
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <div className="text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
-                  {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                  {user.firstName?.charAt(0) ?? ''}{user.lastName?.charAt(0) ?? ''}
                 </div>
                 <h2 className="text-lg font-semibold text-gray-900">
-                  {user.firstName} {user.lastName}
+                  {user.firstName ?? ''} {user.lastName ?? ''}
                 </h2>
                 <p className="text-gray-600 text-sm">{user.email}</p>
 
