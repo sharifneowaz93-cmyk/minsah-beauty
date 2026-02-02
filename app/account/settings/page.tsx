@@ -90,8 +90,11 @@ export default function ProfileSettingsPage() {
       // Update user data
       setUser(prev => ({
         ...prev,
-        ...profileData,
-        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth) : undefined
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+        dateOfBirth: profileData.dateOfBirth ? new Date(profileData.dateOfBirth) : undefined,
+        gender: profileData.gender as 'male' | 'female' | 'other' | undefined
       }));
 
       setSuccessMessage('Profile updated successfully!');
