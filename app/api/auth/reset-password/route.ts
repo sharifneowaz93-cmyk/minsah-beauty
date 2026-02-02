@@ -1,24 +1,75 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/db/prisma';
+import { checkRateLimit } from '@/lib/cache/redis';
+import { createLogger } from '@/lib/logger';
 
-// Mock user storage - in production, use database
-const mockUsers = new Map<string, any>();
+const logger = createLogger('auth:reset-password');
 
-// Add some mock users for testing
-mockUsers.set('user@test.com', {
-  id: 'user_1',
-  email: 'user@test.com',
-  password: 'oldpassword123',
-  firstName: 'Test',
-  lastName: 'User',
-  role: 'customer'
-});
+// Rate limit: 3 attempts per hour per IP
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW = 3600;
+
+// Password requirements
+const PASSWORD_MIN_LENGTH = 8;
+
+function validatePassword(password: string): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    errors.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters long`);
+  }
+
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must contain at least one lowercase letter');
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter');
+  }
+
+  if (!/\d/.test(password)) {
+    errors.push('Password must contain at least one number');
+  }
+
+  if (!/[@$!%*?&]/.test(password)) {
+    errors.push('Password must contain at least one special character (@$!%*?&)');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { token, oldPassword, newPassword } = body;
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+             request.headers.get('x-real-ip') ||
+             'unknown';
 
+  try {
+    // Rate limiting
+    const rateLimitKey = `reset-password:${ip}`;
+    const rateLimit = await checkRateLimit(rateLimitKey, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW);
+
+    if (!rateLimit.allowed) {
+      logger.warn('Rate limit exceeded for password reset', { ip });
+      return NextResponse.json(
+        {
+          error: 'Too many password reset attempts. Please try again later.',
+          retryAfter: rateLimit.resetIn
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rateLimit.resetIn),
+          }
+        }
+      );
+    }
+
+    const body = await request.json();
+    const { token, newPassword } = body;
+
+    // Validate input
     if (!token || !newPassword) {
       return NextResponse.json(
         { error: 'Token and new password are required' },
@@ -27,71 +78,89 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate password strength
-    if (newPassword.length < 6) {
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.valid) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
+        { error: 'Password requirements not met', details: passwordValidation.errors },
         { status: 400 }
       );
     }
 
-    // Verify reset token
-    let tokenData;
-    try {
-      const decoded = Buffer.from(token, 'base64').toString('utf-8');
-      tokenData = JSON.parse(decoded);
-    } catch (error) {
+    // Find the password reset token in database
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+
+    if (!resetToken) {
+      logger.info('Invalid password reset token attempted');
       return NextResponse.json(
-        { error: 'Invalid reset token' },
+        { error: 'Invalid or expired reset token' },
         { status: 401 }
       );
     }
 
-    // Check token expiration
-    if (Date.now() > tokenData.exp) {
+    // Check if token is expired
+    if (resetToken.expires < new Date()) {
+      logger.info('Expired password reset token used', { email: resetToken.email });
+      await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
       return NextResponse.json(
-        { error: 'Reset token has expired' },
+        { error: 'Reset token has expired. Please request a new one.' },
         { status: 401 }
       );
     }
 
-    // Check token purpose
-    if (tokenData.purpose !== 'password_reset') {
+    // Check if token was already used
+    if (resetToken.used) {
+      logger.warn('Already used password reset token attempted', { email: resetToken.email });
       return NextResponse.json(
-        { error: 'Invalid token purpose' },
+        { error: 'This reset token has already been used' },
         { status: 401 }
       );
     }
 
-    // Find user by email from token
-    const user = mockUsers.get(tokenData.email);
+    // Find user by email
+    const user = await prisma.user.findUnique({
+      where: { email: resetToken.email },
+    });
 
     if (!user) {
+      logger.error('User not found for valid reset token', { email: resetToken.email });
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
-    // If old password is provided, verify it
-    if (oldPassword && user.password !== oldPassword) {
-      return NextResponse.json(
-        { error: 'Old password is incorrect' },
-        { status: 401 }
-      );
-    }
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
 
-    // Update password (in production, hash with bcrypt)
-    user.password = newPassword;
-    mockUsers.set(tokenData.email, user);
+    // Update user password and mark token as used
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { used: true },
+      }),
+      // Revoke all existing refresh tokens for security
+      prisma.refreshToken.updateMany({
+        where: { userId: user.id },
+        data: { revoked: true },
+      }),
+    ]);
+
+    logger.info('Password reset successful', { userId: user.id });
 
     return NextResponse.json({
-      message: 'Password reset successfully'
+      message: 'Password reset successful. Please login with your new password.',
     });
 
   } catch (error) {
-    console.error('Error resetting password:', error);
+    logger.error('Password reset error', error);
     return NextResponse.json(
-      { error: 'Failed to reset password' },
+      { error: 'An error occurred while resetting password. Please try again.' },
       { status: 500 }
     );
   }

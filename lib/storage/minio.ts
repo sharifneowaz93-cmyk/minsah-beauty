@@ -1,4 +1,7 @@
 import { Client } from 'minio';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('storage:minio');
 
 // MinIO singleton pattern
 const globalForMinio = globalThis as unknown as {
@@ -13,15 +16,20 @@ function createMinioClient(): Client {
   const useSSL = process.env.MINIO_USE_SSL === 'true';
 
   if (!accessKey || !secretKey) {
-    console.warn('MinIO credentials not set. Storage operations will fail.');
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      logger.error('MinIO credentials not set in production. Storage operations will fail.');
+      throw new Error('MINIO_ACCESS_KEY and MINIO_SECRET_KEY must be set in production');
+    }
+    logger.warn('MinIO credentials not set. Using development defaults.');
   }
 
   return new Client({
     endPoint: endpoint,
     port: port,
     useSSL: useSSL,
-    accessKey: accessKey || 'minioadmin',
-    secretKey: secretKey || 'minioadmin',
+    accessKey: accessKey || '',
+    secretKey: secretKey || '',
   });
 }
 
@@ -45,7 +53,7 @@ export async function initializeBucket(): Promise<void> {
     const exists = await minio.bucketExists(BUCKET_NAME);
     if (!exists) {
       await minio.makeBucket(BUCKET_NAME, 'us-east-1');
-      console.log(`Bucket '${BUCKET_NAME}' created successfully`);
+      logger.info(`Bucket '${BUCKET_NAME}' created successfully`);
 
       // Set bucket policy for public read access on specific paths
       const policy = {
@@ -66,10 +74,10 @@ export async function initializeBucket(): Promise<void> {
       };
 
       await minio.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
-      console.log('Bucket policy set for public access');
+      logger.info('Bucket policy set for public access');
     }
   } catch (error) {
-    console.error('Failed to initialize MinIO bucket:', error);
+    logger.error('Failed to initialize MinIO bucket:', error);
     throw error;
   }
 }

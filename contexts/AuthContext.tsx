@@ -1,264 +1,390 @@
-﻿'use client';
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { SessionProvider, useSession } from 'next-auth/react';
-import type { User, UserAddress, LoyaltyTransaction, Referral, ProductReview, WishlistItem, UserStats } from '@/types/user';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { SessionProvider, useSession, signIn, signOut } from 'next-auth/react';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string | null;
+  avatar: string | null;
+  role: string;
+  status: string;
+  emailVerified: boolean;
+  loyaltyPoints: number;
+  referralCode: string | null;
+  preferences?: {
+    newsletter: boolean;
+    smsNotifications: boolean;
+    promotions: boolean;
+    newProducts: boolean;
+    orderUpdates: boolean;
+  };
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  error: string | null;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   loginWithProvider: (provider: string) => void;
   logout: () => Promise<void>;
-  register: (userData: Partial<User>, password: string) => Promise<boolean>;
+  register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
   updatePreferences: (preferences: Partial<User['preferences']>) => Promise<boolean>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   uploadAvatar: (file: File) => Promise<boolean>;
   hasPermission: (permission: string) => boolean;
   isInRole: (role: string) => boolean;
+  refreshToken: () => Promise<boolean>;
+  clearError: () => void;
+}
+
+interface RegisterData {
+  email: string;
+  name: string;
+  password: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  referralCode?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data - in production, this would come from your API
-const createMockUser = (): User => ({
-  id: '1',
-  email: 'john.doe@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  phone: '+1 (555) 123-4567',
-  dateOfBirth: new Date('1990-05-15'),
-  gender: 'male',
-  avatar: '/avatars/john-doe.jpg',
-  emailVerified: true,
-  phoneVerified: false,
-  role: 'customer',
-  status: 'active',
-  createdAt: new Date('2023-01-15'),
-  lastLoginAt: new Date('2024-01-20'),
-  preferences: {
-    newsletter: true,
-    smsNotifications: false,
-    promotions: true,
-    newProducts: true,
-    orderUpdates: true
-  },
-  addresses: [],
-  loyaltyPoints: 2450,
-  referralCode: 'JOHN2024',
-  referredBy: ''
-});
+// Role-based permissions
+const rolePermissions: Record<string, string[]> = {
+  customer: [
+    'browse_products',
+    'view_products',
+    'add_to_cart',
+    'purchase_products',
+    'write_reviews',
+    'manage_profile',
+    'manage_addresses',
+    'manage_wishlist',
+    'view_orders',
+    'track_orders'
+  ],
+  vip: [
+    'browse_products',
+    'view_products',
+    'add_to_cart',
+    'purchase_products',
+    'write_reviews',
+    'manage_profile',
+    'manage_addresses',
+    'manage_wishlist',
+    'view_orders',
+    'track_orders',
+    'exclusive_deals',
+    'early_access',
+    'free_shipping',
+    'priority_support'
+  ],
+  premium: [
+    'browse_products',
+    'view_products',
+    'add_to_cart',
+    'purchase_products',
+    'write_reviews',
+    'manage_profile',
+    'manage_addresses',
+    'manage_wishlist',
+    'view_orders',
+    'track_orders',
+    'exclusive_deals',
+    'early_access',
+    'free_shipping',
+    'priority_support',
+    'personal_stylist',
+    'birthday_rewards',
+    'anniversary_rewards'
+  ]
+};
 
 function AuthProviderContent({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Refresh token function
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  // Fetch user profile from API
+  const fetchUserProfile = useCallback(async (): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        return true;
+      } else if (response.status === 401) {
+        // Try to refresh the token
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          // Retry fetching profile
+          const retryResponse = await fetch('/api/auth/me', {
+            credentials: 'include',
+          });
+          if (retryResponse.ok) {
+            const data = await retryResponse.json();
+            setUser(data.user);
+            return true;
+          }
+        }
+        setUser(null);
+        return false;
+      }
+      return false;
+    } catch {
+      setUser(null);
+      return false;
+    }
+  }, [refreshToken]);
+
+  // Initialize auth state
   useEffect(() => {
     if (status === 'loading') return;
 
-    if (session?.user) {
-      // In production, you would fetch user data from your API
-      const userData = createMockUser();
-      userData.email = session.user.email || userData.email;
-      setUser(userData);
-    } else {
-      setUser(null);
-    }
-    setLoading(false);
-  }, [session, status]);
+    const initAuth = async () => {
+      setLoading(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // In production, this would call your authentication API
-      if (email === 'john.doe@example.com' && password === 'password') {
-        const userData = createMockUser();
-        setUser(userData);
-        return true;
+      // If using NextAuth session
+      if (session?.user) {
+        await fetchUserProfile();
+      } else {
+        // Check for custom JWT auth
+        await fetchUserProfile();
       }
-      return false;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
+
+      setLoading(false);
+    };
+
+    initAuth();
+  }, [session, status, fetchUserProfile]);
+
+  // Login with email/password
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setUser(data.user);
+        return { success: true };
+      } else {
+        const errorMessage = data.error || 'Login failed';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    } catch {
+      const errorMessage = 'Network error. Please try again.';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
   };
 
+  // Login with OAuth provider
   const loginWithProvider = (provider: string) => {
-    // This would trigger NextAuth.js provider login
-    console.log(`Logging in with ${provider}`);
-    // In production: signIn(provider);
+    signIn(provider, { callbackUrl: '/' });
   };
 
+  // Logout
   const logout = async (): Promise<void> => {
     setLoading(true);
+
     try {
-      // In production, this would call your logout API and NextAuth.js signOut
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Logout from custom auth
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      // Also logout from NextAuth if using it
+      if (session) {
+        await signOut({ redirect: false });
+      }
+
       setUser(null);
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch (err) {
+      console.error('Logout error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (userData: Partial<User>, password: string): Promise<boolean> => {
+  // Register new user
+  const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string }> => {
     setLoading(true);
+    setError(null);
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
 
-      // In production, this would call your registration API
-      const newUser: User = {
-        ...createMockUser(),
-        ...userData,
-        id: Date.now().toString(),
-        createdAt: new Date(),
-        emailVerified: false,
-        role: 'customer'
-      } as User;
+      const data = await response.json();
 
-      setUser(newUser);
-      return true;
-    } catch (error) {
-      console.error('Registration error:', error);
-      return false;
+      if (response.ok) {
+        setUser(data.user);
+        return { success: true };
+      } else {
+        const errorMessage = data.error || 'Registration failed';
+        if (data.details) {
+          setError(`${errorMessage}: ${data.details.join(', ')}`);
+        } else {
+          setError(errorMessage);
+        }
+        return { success: false, error: errorMessage };
+      }
+    } catch {
+      const errorMessage = 'Network error. Please try again.';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
   };
 
+  // Update user profile
   const updateUser = async (userData: Partial<User>): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
 
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-
-      // In production, this would update the user in your database
-      return true;
-    } catch (error) {
-      console.error('Update user error:', error);
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        return true;
+      }
+      return false;
+    } catch {
       return false;
     }
   };
 
+  // Update preferences
   const updatePreferences = async (preferences: Partial<User['preferences']>): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      const updatedUser = {
-        ...user,
-        preferences: { ...user.preferences, ...preferences }
-      };
-      setUser(updatedUser);
+      const response = await fetch('/api/auth/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ preferences }),
+      });
 
-      // In production, this would update preferences in your database
-      return true;
-    } catch (error) {
-      console.error('Update preferences error:', error);
-      return false;
-    }
-  };
-
-  const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // In production, this would call your password change API
-      return true;
-    } catch (error) {
-      console.error('Change password error:', error);
-      return false;
-    }
-  };
-
-  const uploadAvatar = async (file: File): Promise<boolean> => {
-    try {
-      // Simulate file upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      if (user) {
-        const avatarUrl = URL.createObjectURL(file);
-        setUser({ ...user, avatar: avatarUrl });
+      if (response.ok) {
+        const data = await response.json();
+        setUser(prev => prev ? { ...prev, preferences: data.preferences } : null);
+        return true;
       }
-
-      // In production, this would upload to your file storage service
-      return true;
-    } catch (error) {
-      console.error('Avatar upload error:', error);
+      return false;
+    } catch {
       return false;
     }
   };
 
-  const hasPermission = (permission: string): boolean => {
+  // Change password
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || 'Failed to change password' };
+      }
+    } catch {
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  };
+
+  // Upload avatar
+  const uploadAvatar = async (file: File): Promise<boolean> => {
     if (!user) return false;
 
-    // Check user role permissions
-    const rolePermissions = {
-      customer: [
-        'browse_products',
-        'view_products',
-        'add_to_cart',
-        'purchase_products',
-        'write_reviews',
-        'manage_profile',
-        'manage_addresses',
-        'manage_wishlist',
-        'view_orders',
-        'track_orders'
-      ],
-      vip: [
-        'browse_products',
-        'view_products',
-        'add_to_cart',
-        'purchase_products',
-        'write_reviews',
-        'manage_profile',
-        'manage_addresses',
-        'manage_wishlist',
-        'view_orders',
-        'track_orders',
-        'exclusive_deals',
-        'early_access',
-        'free_shipping',
-        'priority_support'
-      ],
-      premium: [
-        'browse_products',
-        'view_products',
-        'add_to_cart',
-        'purchase_products',
-        'write_reviews',
-        'manage_profile',
-        'manage_addresses',
-        'manage_wishlist',
-        'view_orders',
-        'track_orders',
-        'exclusive_deals',
-        'early_access',
-        'free_shipping',
-        'priority_support',
-        'personal_stylist',
-        'birthday_rewards',
-        'anniversary_rewards'
-      ]
-    };
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
 
+      const response = await fetch('/api/auth/avatar', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(prev => prev ? { ...prev, avatar: data.avatarUrl } : null);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  // Check permission
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
     return rolePermissions[user.role]?.includes(permission) || false;
   };
 
+  // Check role
   const isInRole = (role: string): boolean => {
     return user?.role === role;
   };
@@ -266,6 +392,7 @@ function AuthProviderContent({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
+    error,
     login,
     loginWithProvider,
     logout,
@@ -275,7 +402,9 @@ function AuthProviderContent({ children }: { children: React.ReactNode }) {
     changePassword,
     uploadAvatar,
     hasPermission,
-    isInRole
+    isInRole,
+    refreshToken,
+    clearError,
   };
 
   return (
@@ -303,9 +432,15 @@ export function useAuth() {
   return context;
 }
 
-// Additional hooks for convenience
+// Hook for checking user authentication status
+export function useIsAuthenticated() {
+  const { user, loading } = useAuth();
+  return { isAuthenticated: !!user, loading };
+}
+
+// Hook for user permissions
 export function useUserPermissions() {
-  const { hasPermission, isInRole, user } = useAuth();
+  const { hasPermission, isInRole } = useAuth();
 
   return {
     canBrowseProducts: hasPermission('browse_products'),
@@ -331,33 +466,18 @@ export function useUserPermissions() {
   };
 }
 
+// Hook for loyalty points
 export function useLoyaltyPoints() {
   const { user, updateUser } = useAuth();
 
-  const addPoints = async (points: number, description: string) => {
+  const addPoints = async (points: number) => {
     if (!user) return false;
-
-    try {
-      const newTotal = user.loyaltyPoints + points;
-      await updateUser({ loyaltyPoints: newTotal });
-      return true;
-    } catch (error) {
-      console.error('Add points error:', error);
-      return false;
-    }
+    return updateUser({ loyaltyPoints: user.loyaltyPoints + points });
   };
 
   const redeemPoints = async (points: number) => {
     if (!user || user.loyaltyPoints < points) return false;
-
-    try {
-      const newTotal = user.loyaltyPoints - points;
-      await updateUser({ loyaltyPoints: newTotal });
-      return true;
-    } catch (error) {
-      console.error('Redeem points error:', error);
-      return false;
-    }
+    return updateUser({ loyaltyPoints: user.loyaltyPoints - points });
   };
 
   return {
