@@ -32,7 +32,25 @@ const clsx = (...classes: (string | boolean | undefined | null)[]): string => {
   return classes.filter(Boolean).join(' ');
 };
 
-const menuItems = [
+// Type definitions for menu items
+interface MenuChild {
+  title: string;
+  href: string;
+  permission?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  badge?: number;
+}
+
+interface MenuItem {
+  title: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: string;
+  badge?: number;
+  children?: MenuChild[];
+}
+
+const menuItems: MenuItem[] = [
   {
     title: 'Dashboard',
     href: '/admin',
