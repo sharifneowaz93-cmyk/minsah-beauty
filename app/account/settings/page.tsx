@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import {
-  User,
+  User as UserIcon,
   Mail,
   Phone,
   Bell,
@@ -69,7 +69,7 @@ export default function ProfileSettingsPage() {
   });
 
   const tabs = [
-    { id: 'profile', name: 'Profile Information', icon: User },
+    { id: 'profile', name: 'Profile Information', icon: UserIcon },
     { id: 'preferences', name: 'Preferences', icon: Bell },
     { id: 'security', name: 'Security', icon: ShieldCheck }
   ];

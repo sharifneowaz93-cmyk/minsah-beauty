@@ -17,7 +17,7 @@ import {
   RefreshCw,
   Eye,
   Edit,
-  ArchiveBox,
+  Archive,
   Receipt
 } from 'lucide-react';
 

@@ -16,13 +16,14 @@ import {
   Edit,
   Trash2,
   Eye,
-  ArchiveBox,
+  Archive,
   RefreshCw,
   DollarSign,
   Building,
   Users,
   FileText,
-  Printer
+  Printer,
+  Star
 } from 'lucide-react';
 
 export default function InventoryManagement() {
@@ -396,7 +397,7 @@ export default function InventoryManagement() {
       <div className="border-b border-gray-200 mb-6">
         <nav className="flex space-x-8" aria-label="Tabs">
           {[
-            { id: 'inventory', name: 'Inventory', icon: ArchiveBox },
+            { id: 'inventory', name: 'Inventory', icon: Archive },
             { id: 'suppliers', name: 'Suppliers', icon: Building },
             { id: 'purchase-orders', name: 'Purchase Orders', icon: FileText },
           ].map((tab) => (
@@ -426,7 +427,7 @@ export default function InventoryManagement() {
             <div className="bg-white border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Total Items</span>
-                <ArchiveBox className="h-5 w-5 text-gray-400" />
+                <Archive className="h-5 w-5 text-gray-400" />
               </div>
               <p className="text-2xl font-bold text-gray-900">{inventory.length}</p>
               <p className="text-xs text-gray-500 mt-1">Across all locations</p>

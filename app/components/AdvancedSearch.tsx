@@ -29,7 +29,7 @@ import {
   Brush,
   Volume2,
   VolumeX,
-  Filter,
+  Filter as FilterIcon,
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
@@ -540,7 +540,7 @@ export default function AdvancedSearch({
                   className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-all duration-300"
                   aria-label="Toggle filters"
                 >
-                  <Filter className="h-5 w-5" />
+                  <FilterIcon className="h-5 w-5" />
                 </button>
               )}
             </div>

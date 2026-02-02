@@ -17,7 +17,8 @@ import {
   ChevronRight,
   BarChart3,
   Sparkles,
-  Hand
+  Hand,
+  ArrowRight
 } from 'lucide-react';
 import { useAuth, useUserPermissions } from '@/contexts/AuthContext';
 

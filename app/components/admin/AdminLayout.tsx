@@ -8,7 +8,7 @@ import {
   BarChart,
   ShoppingBag,
   Users,
-  ArchiveBox,
+  Archive,
   Truck,
   DollarSign,
   Megaphone,
@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       name: 'Inventory',
       href: '/admin/inventory',
-      icon: ArchiveBox,
+      icon: Archive,
       current: pathname.startsWith('/admin/inventory'),
       badge: 3, // Low stock alerts
     },
@@ -214,7 +214,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {
           name: 'Inventory Reports',
           href: '/admin/reports/inventory',
-          icon: ArchiveBox,
+          icon: Archive,
           current: pathname === '/admin/reports/inventory',
         },
         {

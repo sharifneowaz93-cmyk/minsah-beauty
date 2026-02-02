@@ -24,6 +24,7 @@ import {
   Palette,
   Video,
   Banknote,
+  Search,
 } from 'lucide-react';
 
 interface GoogleAdsManagerProps {
