@@ -40,7 +40,7 @@ interface AdminLayoutProps {
 
 interface NavigationItem {
   name: string;
-  href: string;
+  href?: string;
   icon: React.ComponentType<any>;
   current?: boolean;
   badge?: number;
@@ -402,7 +402,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         {item.children.map((child) => (
                           <Link
                             key={child.name}
-                            href={child.href}
+                            href={child.href || '#'}
                             className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
                               child.current
                                 ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
@@ -418,7 +418,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   </div>
                 ) : (
                   <Link
-                    href={item.href}
+                    href={item.href || '#'}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
                       item.current
                         ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
@@ -501,7 +501,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           {item.children.map((child) => (
                             <Link
                               key={child.name}
-                              href={child.href}
+                              href={child.href || '#'}
                               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
                                 child.current
                                   ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'
@@ -517,7 +517,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                   ) : (
                     <Link
-                      href={item.href}
+                      href={item.href || '#'}
                       className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
                         item.current
                           ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-700'

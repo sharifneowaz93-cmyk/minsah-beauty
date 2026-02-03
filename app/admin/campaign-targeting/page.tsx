@@ -27,7 +27,19 @@ export default function CampaignTargetingPage() {
   const [budget, setBudget] = useState('');
 
   // Mock campaign data - Replace with real API data
-  const campaigns = [
+  type CampaignStatus = 'active' | 'paused' | 'draft' | 'ended';
+  const campaigns: Array<{
+    id: string;
+    name: string;
+    targetLocations: { divisions: string[]; districts: string[]; thanas: string[] };
+    estimatedReach: number;
+    budget: number;
+    spent: number;
+    startDate: Date;
+    endDate: Date;
+    status: CampaignStatus;
+    performance: { impressions: number; clicks: number; conversions: number; revenue: number };
+  }> = [
     {
       id: '1',
       name: 'Dhaka Metro Beauty Campaign',
@@ -41,7 +53,7 @@ export default function CampaignTargetingPage() {
       spent: 23456,
       startDate: new Date('2024-01-01'),
       endDate: new Date('2024-01-31'),
-      status: 'active' as const,
+      status: 'active',
       performance: {
         impressions: 123456,
         clicks: 5678,
@@ -62,7 +74,7 @@ export default function CampaignTargetingPage() {
       spent: 15678,
       startDate: new Date('2024-01-05'),
       endDate: new Date('2024-02-05'),
-      status: 'active' as const,
+      status: 'active',
       performance: {
         impressions: 67890,
         clicks: 3456,
@@ -83,7 +95,7 @@ export default function CampaignTargetingPage() {
       spent: 0,
       startDate: new Date('2024-02-01'),
       endDate: new Date('2024-02-15'),
-      status: 'draft' as const,
+      status: 'draft',
       performance: {
         impressions: 0,
         clicks: 0,

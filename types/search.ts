@@ -40,7 +40,7 @@ export interface SearchHistory {
 export interface SuggestionItem {
   id: string;
   text: string;
-  type: 'product' | 'category' | 'brand' | 'suggestion';
+  type: 'product' | 'category' | 'brand' | 'suggestion' | 'history';
   count?: number;
   icon?: React.ReactNode;
 }

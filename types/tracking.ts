@@ -146,33 +146,37 @@ export interface CustomerSession {
 
 // Campaign Attribution
 export interface CampaignAttribution {
-  firstTouch: {
+  firstTouch?: {
     source: string;
     medium: string;
     campaign: string;
     timestamp: number;
   };
-  lastTouch: {
+  lastTouch?: {
     source: string;
     medium: string;
     campaign: string;
     timestamp: number;
   };
-  allTouchpoints: Array<{
+  allTouchpoints?: Array<{
     source: string;
     medium: string;
     campaign: string;
     timestamp: number;
     conversion?: boolean;
   }>;
+  model?: 'first_touch' | 'last_touch' | 'linear' | 'time_decay';
+  touchpoints?: Array<any>;
+  attribution?: Record<string, number>;
 }
 
 // Customer Segment
 export interface CustomerSegment {
   id: string;
   name: string;
-  description: string;
-  conditions: {
+  segment?: 'visitors' | 'browsers' | 'engaged' | 'cart_abandoners' | 'first_time' | 'returning' | 'loyal' | 'at_risk' | 'high_value';
+  description?: string;
+  conditions?: {
     totalOrders?: { min?: number; max?: number };
     totalSpent?: { min?: number; max?: number };
     lastPurchase?: { daysAgo?: number };
@@ -180,28 +184,37 @@ export interface CustomerSegment {
     tags?: string[];
     customEvents?: string[];
   };
-  customerIds: string[];
-  createdAt: string;
-  updatedAt: string;
+  criteria?: {
+    minPageViews?: number;
+    minPurchases?: number;
+    minRevenue?: number;
+  };
+  customerIds?: string[];
+  userCount?: number;
+  value?: 'high' | 'medium' | 'low';
+  lastUpdated?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Retargeting Audience
 export interface RetargetingAudience {
   id: string;
   name: string;
-  platform: keyof AllPlatformsConfig;
-  type: 'custom' | 'lookalike' | 'dynamic';
-  source: {
+  platform: keyof AllPlatformsConfig | 'all';
+  type?: 'custom' | 'lookalike' | 'dynamic';
+  source?: {
     type: 'abandoned_cart' | 'product_viewers' | 'purchasers' | 'segment';
     timeframe: number; // days
     productIds?: string[];
     categoryIds?: string[];
     segmentId?: string;
   };
+  criteria?: Record<string, any>;
   size: number;
   status: 'active' | 'inactive';
   syncedAt?: string;
-  createdAt: string;
+  createdAt: string | number;
 }
 
 // Analytics Report Data

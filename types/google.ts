@@ -169,6 +169,7 @@ export interface GA4Metrics {
   pageviews: number;
   engagementRate: number;
   conversionRate: number;
+  conversions: number;
   revenue: number;
   avgSessionDuration: number;
   bounceRate: number;
@@ -358,6 +359,20 @@ export interface BusinessProfile {
     };
     totalAnswerCount: number;
   }>;
+}
+
+export interface GoogleTag {
+  id: string;
+  name: string;
+  type: string;
+  status: 'active' | 'paused' | 'disabled';
+  firingRule: string;
+  blockingRule?: string;
+  priority: number;
+  impressions: number;
+  lastFired?: Date;
+  tagDetails: string;
+  code?: string;
 }
 
 export interface GTMTag {
@@ -559,6 +574,7 @@ export interface TagManagerData {
     totalVariables: number;
     version: string;
     environment: 'production' | 'staging' | 'development';
+    snippet?: string;
   };
   tags: Array<{
     id: string;
@@ -758,7 +774,7 @@ export const generateMockGoogleServices = (): GoogleService[] => [
       approvedProducts: 153,
       pendingProducts: 3,
       disapprovedProducts: 2,
-      activeListings: true
+      activeListings: 1
     },
     accountId: '123456789',
     setupCompleted: true
@@ -826,7 +842,7 @@ export const generateMockGoogleServices = (): GoogleService[] => [
       containerId: 'GTM-XXXXXX',
       publishedTags: 8,
       unpublishedChanges: 0,
-      lastPublish: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+      lastPublish: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() // 2 days ago
     },
     containerId: 'GTM-XXXXXX'
   },
@@ -936,9 +952,7 @@ export const generateMockMerchantProducts = (): MerchantProduct[] => [
     shipping: [
       { country: 'BD', price: 80, service: 'Standard' }
     ],
-    tax: [
-      { country: 'BD', rate: 15, taxShip: false }
-    ],
+    tax: { country: 'BD', rate: 15, taxShip: false },
     adsEnabled: true,
     lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     createdDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -961,14 +975,13 @@ export const generateMockMerchantProducts = (): MerchantProduct[] => [
       }
     ],
     imageUrl: '/api/placeholder/800/600',
+    additionalImages: [],
     category: 'Serum',
     googleCategory: 'Health & Beauty > Personal Care > Skin Care > Serum',
     shipping: [
       { country: 'BD', price: 80, service: 'Standard' }
     ],
-    tax: [
-      { country: 'BD', rate: 15, taxShip: false }
-    ],
+    tax: { country: 'BD', rate: 15, taxShip: false },
     adsEnabled: true,
     lastUpdated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     createdDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
@@ -992,14 +1005,13 @@ export const generateMockMerchantProducts = (): MerchantProduct[] => [
       }
     ],
     imageUrl: '/api/placeholder/800/600',
+    additionalImages: [],
     category: 'Foundation',
     googleCategory: 'Health & Beauty > Personal Care > Cosmetics > Foundation',
     shipping: [
       { country: 'BD', price: 80, service: 'Standard' }
     ],
-    tax: [
-      { country: 'BD', rate: 15, taxShip: false }
-    ],
+    tax: { country: 'BD', rate: 15, taxShip: false },
     adsEnabled: false,
     lastUpdated: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     createdDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000)
@@ -1026,7 +1038,8 @@ export const generateMockGoogleAdsCampaigns = (): GoogleAdsCampaign[] => [
     targeting: {
       locations: ['Bangladesh'],
       languages: ['en', 'bn'],
-      devices: ['mobile', 'desktop']
+      devices: ['mobile', 'desktop'],
+      demographics: {}
     },
     adGroups: [
       {
@@ -1068,7 +1081,8 @@ export const generateMockGoogleAdsCampaigns = (): GoogleAdsCampaign[] => [
     targeting: {
       locations: ['Bangladesh'],
       languages: ['en', 'bn'],
-      devices: ['mobile', 'desktop']
+      devices: ['mobile', 'desktop'],
+      demographics: {}
     },
     adGroups: [
       {
@@ -1098,6 +1112,7 @@ export const generateMockGoogleAdsCampaigns = (): GoogleAdsCampaign[] => [
     budget: 150,
     budgetType: 'daily',
     spent: 2250,
+    clicks: 2338,
     impressions: 125000,
     ctr: 1.87,
     conversions: 23,
@@ -1123,7 +1138,7 @@ export const generateMockGoogleAdsCampaigns = (): GoogleAdsCampaign[] => [
             id: 'ad_003',
             type: 'video',
             videoUrl: '/api/video/placeholder',
-            callToAction: 'Shop Now'
+            description: 'Shop Now'
           }
         ]
       }
@@ -1143,6 +1158,7 @@ export const generateMockGA4Data = (): GA4Metrics => ({
   pageviews: 45678,
   engagementRate: 65.4,
   conversionRate: 2.3,
+  conversions: 34,
   revenue: 45200,
   avgSessionDuration: 156, // seconds
   bounceRate: 34.5,

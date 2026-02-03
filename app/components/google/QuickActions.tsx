@@ -154,7 +154,7 @@ export default function QuickActions({
                       <span>{service.metrics?.pendingProducts || 0} products pending review</span>
                     )}
                     {service.id === 'search-console' && (
-                      <span>{service.metrics?.coverageIssues?.errors || 0} coverage issues</span>
+                      <span>{(service.metrics as Record<string, unknown>)?.coverageIssues ? ((service.metrics as Record<string, unknown>).coverageIssues as Record<string, number>).errors : 0} coverage issues</span>
                     )}
                   </div>
                   <button className="text-sm underline mt-2">Review Issues</button>

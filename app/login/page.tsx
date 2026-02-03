@@ -115,8 +115,9 @@ export default function LoginPage() {
                   borderColor: '#8E6545',
                   backgroundColor: '#FFF',
                   color: '#421C00',
-                  focusRingColor: '#64320D'
-                }}
+                  // Using Tailwind for focus ring
+                  '--tw-ring-color': '#64320D'
+                } as React.CSSProperties}
                 placeholder="Ex: abc@example.com"
               />
             </div>

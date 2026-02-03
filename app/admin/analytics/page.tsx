@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-2xl font-bold text-gray-900 mt-2">
-            {format === 'currency' ? formatPrice(convertUSDtoBDT(value)) : value.toLocaleString()}
+            {format === 'currency' && typeof value === 'number' ? formatPrice(convertUSDtoBDT(value)) : typeof value === 'number' ? value.toLocaleString() : value}
             {format === 'percentage' && '%'}
           </p>
           <div className="flex items-center mt-2">

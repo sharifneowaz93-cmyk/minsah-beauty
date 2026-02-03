@@ -117,7 +117,7 @@ export default function MerchantCenterCard({ className = '' }: MerchantCenterCar
     input.type = 'file';
     input.accept = '.csv';
     input.onchange = (e) => {
-      const file = e.target.files?.[0];
+      const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         console.log('Uploading CSV:', file.name);
         // Handle actual upload logic here

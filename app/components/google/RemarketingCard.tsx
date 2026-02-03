@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import type { RemarketingData, RemarketingAudience, RemarketingCampaign } from '@/types/google';
+import type { RemarketingData } from '@/types/google';
 import { generateMockRemarketingData, GOOGLE_COLORS } from '@/types/google';
 import {
   RefreshCw,
@@ -39,12 +39,12 @@ export default function RemarketingCard({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'audiences' | 'campaigns' | 'pixels'>('overview');
-  const [selectedAudience, setSelectedAudience] = useState<RemarketingAudience | null>(null);
-  const [selectedCampaign, setSelectedCampaign] = useState<RemarketingCampaign | null>(null);
+  const [selectedAudience, setSelectedAudience] = useState<RemarketingData['audiences'][number] | null>(null);
+  const [selectedCampaign, setSelectedCampaign] = useState<RemarketingData['campaigns'][number] | null>(null);
   const [showCreateAudience, setShowCreateAudience] = useState(false);
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const [newAudience, setNewAudience] = useState<Partial<RemarketingAudience>>({});
-  const [newCampaign, setNewCampaign] = useState<Partial<RemarketingCampaign>>({});
+  const [newAudience, setNewAudience] = useState<{ name?: string; type?: string; description?: string; rules?: string }>({});
+  const [newCampaign, setNewCampaign] = useState<{ name?: string; type?: string; budget?: number }>({});
 
   useEffect(() => {
     loadRemarketingData();

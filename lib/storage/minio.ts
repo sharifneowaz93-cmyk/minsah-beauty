@@ -182,9 +182,9 @@ export async function listObjects(
 
     stream.on('data', (obj) => {
       objects.push({
-        name: obj.name,
-        size: obj.size,
-        lastModified: obj.lastModified,
+        name: obj.name ?? '',
+        size: obj.size ?? 0,
+        lastModified: obj.lastModified ?? new Date(),
       });
     });
 

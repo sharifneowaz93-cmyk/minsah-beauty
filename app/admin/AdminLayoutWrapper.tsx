@@ -217,7 +217,7 @@ export default function AdminLayoutWrapper({ children }: AdminLayoutWrapperProps
     );
   };
 
-  const filteredMenuItems = menuItems.filter(item => hasPermission(item.permission));
+  const filteredMenuItems = menuItems.filter(item => !item.permission || hasPermission(item.permission));
 
   const isActive = (href: string) => {
     if (href === '/admin') {

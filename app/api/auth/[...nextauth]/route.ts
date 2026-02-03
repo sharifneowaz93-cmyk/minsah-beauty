@@ -130,7 +130,7 @@ export const authOptions: NextAuthOptions = {
         if (dbUser) {
           // Check if this provider is already linked
           const existingAccount = dbUser.accounts.find(
-            (acc) => acc.provider === account.provider
+            (acc: { provider: string }) => acc.provider === account.provider
           );
 
           if (!existingAccount) {
