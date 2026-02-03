@@ -190,6 +190,7 @@ export const authOptions: NextAuthOptions = {
                 },
               },
             },
+            include: { accounts: true },
           });
         }
 
