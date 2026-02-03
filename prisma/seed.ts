@@ -1,9 +1,7 @@
 import { PrismaClient, AdminRole, UserRole, UserStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.DATABASE_URL,
-});
+const prisma = new PrismaClient();
 
 async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
