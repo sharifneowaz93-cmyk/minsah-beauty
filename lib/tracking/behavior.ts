@@ -185,7 +185,7 @@ export class BehaviorTracker {
     if (!behavior) return null;
 
     // Determine segment based on behavior
-    let segment: CustomerSegment['segment'];
+    let segment: NonNullable<CustomerSegment['segment']>;
     let value: 'high' | 'medium' | 'low';
 
     if (behavior.stage === 'loyal_customer') {
@@ -226,8 +226,8 @@ export class BehaviorTracker {
   /**
    * Get human-readable segment name
    */
-  private static getSegmentName(segment: CustomerSegment['segment']): string {
-    const names: Record<CustomerSegment['segment'], string> = {
+  private static getSegmentName(segment: NonNullable<CustomerSegment['segment']>): string {
+    const names: Record<NonNullable<CustomerSegment['segment']>, string> = {
       visitors: 'New Visitors',
       browsers: 'Active Browsers',
       engaged: 'Engaged Shoppers',

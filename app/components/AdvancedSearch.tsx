@@ -73,7 +73,7 @@ export default function AdvancedSearch({
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<any>(null);
 
   // Search state

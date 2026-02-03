@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
         name: 'Hydrating Face Serum',
         slug: 'hydrating-face-serum',
         price: 1800,
+        originalPrice: 2200,
         image: '/images/products/serum-1.jpg',
         inStock: true
       }

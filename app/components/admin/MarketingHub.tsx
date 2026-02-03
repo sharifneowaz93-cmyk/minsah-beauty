@@ -106,6 +106,7 @@ export default function MarketingHub() {
         platform: 'instagram',
         accountName: '@minsahbeauty',
         accountId: '234567890',
+        accessToken: '',
         isConnected: true,
         lastSync: new Date().toISOString(),
         metrics: {
@@ -131,6 +132,7 @@ export default function MarketingHub() {
         platform: 'tiktok',
         accountName: '@minsahbeauty',
         accountId: '345678901',
+        accessToken: '',
         isConnected: true,
         lastSync: new Date().toISOString(),
         metrics: {
@@ -154,6 +156,7 @@ export default function MarketingHub() {
         platform: 'youtube',
         accountName: 'Minsah Beauty',
         accountId: '456789012',
+        accessToken: '',
         isConnected: true,
         lastSync: new Date().toISOString(),
         metrics: {
@@ -178,6 +181,7 @@ export default function MarketingHub() {
         platform: 'twitter',
         accountName: '@minsahbeauty',
         accountId: '567890123',
+        accessToken: '',
         isConnected: false,
         metrics: {
           followers: 12345,
@@ -200,6 +204,7 @@ export default function MarketingHub() {
         platform: 'linkedin',
         accountName: 'Minsah Beauty',
         accountId: '678901234',
+        accessToken: '',
         isConnected: true,
         lastSync: new Date().toISOString(),
         metrics: {
@@ -630,8 +635,8 @@ export default function MarketingHub() {
     ? socialAccounts.reduce((sum, account) => sum + account.metrics.engagement, 0) / socialAccounts.length
     : 0;
   const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
-  const totalBudget = campaigns.reduce((sum, campaign) => sum + campaign.budget, 0);
-  const totalSpent = campaigns.reduce((sum, campaign) => sum + campaign.spent, 0);
+  const totalBudget = campaigns.reduce((sum, campaign) => sum + (campaign.budget ?? 0), 0);
+  const totalSpent = campaigns.reduce((sum, campaign) => sum + (campaign.spent ?? 0), 0);
 
   return (
     <div className="p-6">
@@ -1017,8 +1022,8 @@ export default function MarketingHub() {
                           {campaign.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(campaign.budget)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(campaign.spent)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(campaign.budget ?? 0)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{formatCurrency(campaign.spent ?? 0)}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{campaign.metrics.roas || 'N/A'}x</td>
                       <td className="px-4 py-3 text-sm text-gray-900">{campaign.metrics.converted || 0}</td>
                       <td className="px-4 py-3">
@@ -1088,7 +1093,7 @@ export default function MarketingHub() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
                     <select
                       value={newPost.platform}
-                      onChange={(e) => setNewPost({ ...newPost, platform: e.target.value })}
+                      onChange={(e) => setNewPost({ ...newPost, platform: e.target.value as SocialMediaPost['platform'] })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select platform</option>
@@ -1104,7 +1109,7 @@ export default function MarketingHub() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Post Type</label>
                     <select
                       value={newPost.type}
-                      onChange={(e) => setNewPost({ ...newPost, type: e.target.value })}
+                      onChange={(e) => setNewPost({ ...newPost, type: e.target.value as SocialMediaPost['type'] })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select type</option>
@@ -1122,7 +1127,7 @@ export default function MarketingHub() {
                   <textarea
                     rows={4}
                     value={newPost.content?.text || ''}
-                    onChange={(e) => setNewPost({ ...newPost, content: { ...newPost.content, text: e.target.value } })}
+                    onChange={(e) => setNewPost({ ...newPost, content: { hashtags: [], mentions: [], ...newPost.content, text: e.target.value } })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="What's on your mind?"
                   />
@@ -1202,7 +1207,7 @@ export default function MarketingHub() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Campaign Type</label>
                     <select
                       value={newCampaign.type}
-                      onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value })}
+                      onChange={(e) => setNewCampaign({ ...newCampaign, type: e.target.value as MarketingCampaign['type'] })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select type</option>
@@ -1234,7 +1239,7 @@ export default function MarketingHub() {
                       value={newCampaign.duration?.end ? new Date(newCampaign.duration.end).toISOString().slice(0, 10) : ''}
                       onChange={(e) => setNewCampaign({
                         ...newCampaign,
-                        duration: { ...newCampaign.duration, end: new Date(e.target.value).toISOString() }
+                        duration: { start: newCampaign.duration?.start ?? new Date().toISOString(), ...newCampaign.duration, end: new Date(e.target.value).toISOString() }
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />

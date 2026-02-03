@@ -5,12 +5,13 @@
 
 'use client';
 
+import React from 'react';
 import { fixEncoding } from '@/lib/fixEncoding';
 
 interface SafeTextProps {
   children: string | undefined | null;
   className?: string;
-  as?: keyof JSX.IntrinsicElements;
+  as?: React.ElementType;
   title?: string;
 }
 
@@ -20,7 +21,7 @@ export default function SafeText({
   as: Component = 'span',
   title
 }: SafeTextProps) {
-  const fixedText = fixEncoding(children);
+  const fixedText = children ? fixEncoding(children) : '';
   const displayTitle = title || fixedText;
 
   return <Component className={className} title={displayTitle}>{fixedText}</Component>;
@@ -30,5 +31,5 @@ export default function SafeText({
  * Hook for fixing encoding in React components
  */
 export function useFixedText(text: string | undefined | null): string {
-  return fixEncoding(text);
+  return text ? fixEncoding(text) : '';
 }

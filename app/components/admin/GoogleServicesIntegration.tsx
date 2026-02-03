@@ -541,9 +541,9 @@ export default function GoogleServicesIntegration() {
 
       {/* Individual Service Tabs */}
       {activeTab === 'search' && <SearchConsoleCard dateRange={dateRange} onDateRangeChange={setDateRange} />}
-      {activeTab === 'merchant' && <MerchantCenterCard dateRange={dateRange} onDateRangeChange={setDateRange} />}
-      {activeTab === 'ads' && <GoogleAdsManager dateRange={dateRange} onDateRangeChange={setDateRange} />}
-      {activeTab === 'analytics' && <AnalyticsDashboard dateRange={dateRange} onDateRangeChange={setDateRange} />}
+      {activeTab === 'merchant' && <MerchantCenterCard />}
+      {activeTab === 'ads' && <GoogleAdsManager />}
+      {activeTab === 'analytics' && <AnalyticsDashboard />}
       {activeTab === 'business' && <BusinessProfileCard dateRange={dateRange} onDateRangeChange={setDateRange} />}
       {activeTab === 'tagmanager' && <TagManagerCard dateRange={dateRange} onDateRangeChange={setDateRange} />}
       {activeTab === 'remarketing' && <RemarketingCard dateRange={dateRange} onDateRangeChange={setDateRange} />}

@@ -212,7 +212,7 @@ export const mockProducts: Product[] = [
     isBestSeller: true,
     isExclusive: false,
     isTrending: true,
-    skinType: ['oily', 'combination', 'acne'],
+    skinType: ['oily', 'combination', 'normal'],
     skinConcerns: ['pores', 'acne', 'dark-spots'],
     tags: ['brightening', 'oil-control'],
     isVegan: true,

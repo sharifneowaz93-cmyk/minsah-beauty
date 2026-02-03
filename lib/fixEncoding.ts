@@ -9,7 +9,7 @@ export function fixEncoding(text: string): string {
 
   // Step 1: Fix common mojibake patterns using regex
   // These patterns match corrupted emoji without using literal corrupted chars
-  const patterns: Array<[RegExp, string]> = [
+  const patterns: Array<[RegExp, string | ((match: string) => string)]> = [
     // Eye emoji variations
     [/\u00F0\u009F\u0091\u0081[\uFE0F\uFEFF]*/g, '\u{1F441}\uFE0F'],
     
@@ -51,7 +51,11 @@ export function fixEncoding(text: string): string {
 
   // Apply pattern replacements
   for (const [pattern, replacement] of patterns) {
-    fixed = fixed.replace(pattern, replacement);
+    if (typeof replacement === 'function') {
+      fixed = fixed.replace(pattern, replacement);
+    } else {
+      fixed = fixed.replace(pattern, replacement);
+    }
   }
 
   // Step 2: Clean up excessive variation selectors and zero-width characters

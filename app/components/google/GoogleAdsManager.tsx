@@ -184,7 +184,8 @@ export default function GoogleAdsManager({ className = '' }: GoogleAdsManagerPro
         targeting: {
           locations: ['Bangladesh'],
           languages: ['en'],
-          devices: ['mobile', 'desktop']
+          devices: ['mobile', 'desktop'],
+          demographics: {}
         },
         adGroups: [{
           id: Date.now().toString(),

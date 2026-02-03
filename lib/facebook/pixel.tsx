@@ -22,17 +22,7 @@ import type { FacebookPixelEvent, FacebookPixelParams } from '@/types/facebook';
 // Get Pixel ID from environment
 const PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
 
-// Extend window object for Facebook Pixel
-declare global {
-  interface Window {
-    fbq: (
-      action: 'track' | 'trackCustom' | 'init',
-      eventName: string,
-      params?: FacebookPixelParams
-    ) => void;
-    _fbq: typeof window.fbq;
-  }
-}
+// Window.fbq is declared globally in lib/tracking/manager.ts
 
 /**
  * Generate UUID v4 for event deduplication

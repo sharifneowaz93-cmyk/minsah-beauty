@@ -43,7 +43,7 @@ interface MenuItemProps {
 
 const MenuItem: React.FC<MenuItemProps> = ({ category, isOpen, onToggle, onClose }) => {
   const menuRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle mouse enter with delay to prevent flickering
   const handleMouseEnter = () => {

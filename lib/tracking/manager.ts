@@ -5,6 +5,23 @@
 
 import { TrackingEvent, TrackingEventData, AllPlatformsConfig, CustomerSession } from '@/types/tracking';
 
+// Extend Window interface for tracking platform globals
+declare global {
+  interface Window {
+    fbq?: (...args: any[]) => void;
+    gtag: (...args: any[]) => void;
+    ttq: { track: (...args: any[]) => void };
+    snaptr: (...args: any[]) => void;
+    pintrk: (...args: any[]) => void;
+    twq: (...args: any[]) => void;
+    _linkedin_data_partner_ids: string[];
+    lintrk: (...args: any[]) => void;
+    rdt: (...args: any[]) => void;
+    uetq: any[];
+    mixpanel: { track: (...args: any[]) => void };
+  }
+}
+
 class TrackingManager {
   private config: AllPlatformsConfig;
   private sessionData: CustomerSession | null = null;
@@ -109,7 +126,7 @@ class TrackingManager {
     };
 
     // Store UTM params in localStorage for attribution
-    if (this.sessionData.utmParams.source) {
+    if (this.sessionData.utmParams?.source) {
       localStorage.setItem('first_touch_utm', JSON.stringify(this.sessionData.utmParams));
     }
     localStorage.setItem('last_touch_utm', JSON.stringify(this.sessionData.utmParams));
@@ -184,7 +201,7 @@ class TrackingManager {
     if (typeof window === 'undefined' || !window.fbq) return;
 
     const fbEvent = this.mapToFacebookEvent(event);
-    window.fbq('track', fbEvent, data);
+    window.fbq('track', fbEvent, data as Record<string, any>);
   }
 
   /**
