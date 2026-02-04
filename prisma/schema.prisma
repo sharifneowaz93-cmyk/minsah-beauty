@@ -1,12 +1,14 @@
 // Minsah Beauty - Prisma Schema
-// PostgreSQL Database for Coolify Deployment
+// PostgreSQL Database for Dokploy Deployment
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ==========================================
